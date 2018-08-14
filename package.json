@@ -1,0 +1,15 @@
+{
+  "name": "create-graphql-app",
+  "version": "1.0.0",
+  "description": "Create GraphQL serves ",
+  "main": "create-graphql-app.js",
+  "author": "Michel Paupulaire",
+  "license": "MIT",
+  "preferGlobal": true,
+  "bin": "./create-graphql-app.js",
+  "dependencies": {
+    "commander": "^2.17.1",
+    "inquirer": "^6.1.0",
+    "shelljs": "^0.8.2"
+  }
+}
