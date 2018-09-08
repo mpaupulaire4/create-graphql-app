@@ -1,0 +1,158 @@
+import express from 'express';
+import cors from 'cors';
+import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
+<$_ if ( m.engine ) { _$>
+import { Engine } from 'apollo-engine';
+<$_ } _$>
+import compression from 'compression';
+import bodyParser from 'body-parser';
+import { createServer } from 'http';
+<$_ if ( m.subscriptions ) { _$>
+import { SubscriptionServer } from 'subscriptions-transport-ws';
+import { execute, subscribe } from 'graphql';
+<$_ } _$>
+<$_ if ( m.sessions ) { _$>
+import cookieParser from 'cookie-parser';
+import cookie from 'cookie';
+import SessionStore from './Auth/SessionStore'
+<$_ } _$>
+import schema, { FullSchemaDeff } from './schema';
+
+<$_ if ( m.subscriptions ) { _$>
+const WS_GQL_PATH = '/subscriptions';
+<$_ } _$>
+
+// Arguments usually come from env vars
+export function run({
+<$_ if ( m.sessions ) { _$>
+  SESSION_STORE_SECRET,
+<$_ } _$>
+<$_ if ( m.engine ) { _$>
+  ENGINE_API_KEY,
+<$_ } _$>
+  PORT: portFromEnv = 3100,
+} = {}) {
+
+  let port = parseInt(portFromEnv, 10);
+
+<$_ if ( m.subscriptions ) { _$>
+  const wsGqlURL = process.env.NODE_ENV !== 'production'
+    ? `ws://localhost:${port}${WS_GQL_PATH}`
+    : `ws://PROD_URL${WS_GQL_PATH}`;
+
+<$_ } _$>
+  const app = express();
+
+<$_ if ( m.engine ) { _$>
+  if (ENGINE_API_KEY) {
+    const fullEngineConfig = {
+      apiKey: ENGINE_API_KEY,
+      logcfg: {
+        level: 'DEBUG',
+      },
+    };
+    const engine = new Engine({
+      engineConfig: fullEngineConfig,
+      endpoint: '/graphql',
+      graphqlPort: port,
+    });
+    engine.start();
+    app.use(engine.expressMiddleware());
+  }
+
+<$_ } _$>
+  app.use(compression());
+  app.use(cors());
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
+<$_ if ( m.sessions ) { _$>
+
+  const sessionStore = SessionStore(app)
+<$_ } _$>
+
+  app.get('/schema', (req, res) => {
+    res.send(FullSchemaDeff)
+  })
+
+  app.use('/graphql', graphqlExpress((req) => {
+    return {
+      schema,
+<$_ if ( m.engine ) { _$>
+      tracing: true,
+<$_ } _$>
+      context: {
+        current_user: { id: 12345, name: 'Bob' }
+      },
+    };
+  }));
+
+  app.use('/graphiql', graphiqlExpress({
+    endpointURL: '/graphql',
+<$_ if ( m.subscriptions ) { _$>
+    subscriptionsEndpoint:wsGqlURL
+<$_ } _$>
+  }));
+
+  const server = createServer(app);
+
+  server.listen(port, () => {
+    console.log(`API Server is now running on http://localhost:${port}`); // eslint-disable-line no-console
+<$_ if ( m.subscriptions ) { _$>
+    console.log(`API Server over web socket with subscriptions is now running on ws://localhost:${port}${WS_GQL_PATH}`); // eslint-disable-line no-console
+<$_ } _$>
+  });
+
+<$_ if ( m.subscriptions ) { _$>
+  // eslint-disable-next-line
+  new SubscriptionServer(
+    {
+      schema,
+      execute,
+      subscribe,
+      // the onOperation function is called for every new operation
+      // and we use it to set the GraphQL context for this operation
+
+      onOperation: (msg, params, socket) => {
+        return new Promise((resolve) => {
+          if (socket.upgradeReq) {
+            const defaultContext = {
+              ...params,
+              context: {
+                current_user: { id: 12345, name: 'Bob' },
+              }
+            }
+<$_ if ( m.sessions ) { _$>
+
+            const cookies = cookie.parse(socket.upgradeReq.headers.cookie);
+            const sessionID = cookieParser.signedCookie(cookies['connect.sid'], SESSION_STORE_SECRET);
+
+            if (!sessionID) {
+              resolve(defaultContext);
+              return;
+            }
+
+            // get the session object
+            sessionStore.get(sessionID, (err, session) => {
+              if (err) {
+                throw new Error('Failed retrieving sessionID from the sessionStore.');
+              }
+              defaultContext.context.session = session
+              resolve(defaultContext);
+            });
+<$_ } else { _$>
+
+            resolve(defaultContext);
+<$_ } _$>
+          }
+        });
+      },
+    },
+    {
+      path: WS_GQL_PATH,
+      server,
+    },
+  );
+
+<$_ } _$>
+  return server;
+}

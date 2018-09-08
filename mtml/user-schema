@@ -1,0 +1,91 @@
+const users = [
+  {
+    id: 1,
+    name: 'Joe'
+  },
+  {
+    id: 2,
+    name: 'Mary'
+  },
+  {
+    id: 3,
+  },
+  {
+    id: 4,
+    name: 'Anne'
+  },
+]
+
+let ids = 5;
+
+const User =`
+  # Type for users of the app
+  type User implements Node {
+    # the User's Unique ID
+    id: ID!
+
+    # User's full name
+    name: String
+
+    # A gretting from this user
+    greeting: String!
+  }
+`
+
+const Queries = `
+  extend type Query {
+    # Get a list of all User's
+    users: [User!]!
+  }
+`
+
+const Mutations = `
+  extend type Mutation {
+    # Add a user
+    addUser(
+      name: String
+    ): [User!]!
+  }
+`
+
+const FacebookProviderInfo = `
+  # Various Facebook Specific info
+  type FacebookProviderInfo {
+    # User's facebook id
+    id: ID!
+
+    # Link to user's Facebook profile
+    link: String
+  }
+`
+
+export const UserResolvers = {
+  Query: {
+    users: (_, args, context) => {
+      return users
+    },
+  },
+  Mutation: {
+    addUser: (_, args, context) => {
+      users.push({
+        id: ids++,
+        name: args.name
+      })
+      return users
+    }
+  },
+  User: {
+    greeting: (user, args, context) => {
+      return user.name ?
+        `Hi, my name is ${user.name}`:
+        'I can\'t remember who i am! Who are you?'
+    },
+  }
+}
+
+
+export const UserSchema = ()=> [
+  User,
+  Queries,
+  Mutations,
+]

@@ -1,0 +1,107 @@
+{
+    "meta": {
+        "subscriptions": false,
+        "sessions": false,
+        "engine": false
+    },
+    "entity": {
+        "here": {
+            "data": "yo"
+        }
+    },
+    "template": [
+        {
+            "name": "Entry",
+            "from": "entry"
+        },
+        {
+            "name": "UserSchema",
+            "from": "user-schema"
+        },
+        {
+            "name": "NodeSchema",
+            "from": "node-schema"
+        },
+        {
+            "name": "BaseSchema",
+            "from": "base-schema"
+        },
+        {
+            "name": "SessionStore",
+            "from": "session-store"
+        },
+        {
+            "name": "BabelRC",
+            "from": "babelrc"
+        },
+        {
+            "name": "Server",
+            "from": "server"
+        },
+        {
+            "name": "Package",
+            "from": "package"
+        },
+        {
+            "name": "NVMRC",
+            "from": "nvmrc"
+        },
+        {
+            "name": "GITIgnore",
+            "from": "gitignore"
+        }
+    ],
+    "use": [
+        {
+            "template": "BabelRC",
+            "spawn": "./temp/.babelrc",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "UserSchema",
+            "spawn": "./temp/src/Schema/User/index.js",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "NodeSchema",
+            "spawn": "./temp/src/Schema/Node.js",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "BaseSchema",
+            "spawn": "./temp/src/Schema/index.js",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "SessionStore",
+            "spawn": "./temp/src/Auth/SessionStore.js",
+            "if": "m.sessions",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "Entry",
+            "spawn": "./temp/src/index.js",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "Server",
+            "spawn": "./temp/src/server.js",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "Package",
+            "spawn": "./temp/package.json",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "NVMRC",
+            "spawn": "./temp/.nvmrc",
+            "relativeTo": "cwd"
+        },
+        {
+            "template": "GITIgnore",
+            "spawn": "./temp/.gitignore",
+            "relativeTo": "cwd"
+        }
+    ]
+}

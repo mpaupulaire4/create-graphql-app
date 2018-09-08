@@ -7,9 +7,11 @@
   "license": "MIT",
   "preferGlobal": true,
   "bin": "./create-graphql-app.js",
+  "scripts": {
+    "make": "mtml --base-dir ./mtml"
+  },
   "dependencies": {
-    "commander": "^2.17.1",
-    "inquirer": "^6.1.0",
+    "mtml": "^1.1.0",
     "shelljs": "^0.8.2"
   }
 }

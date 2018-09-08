@@ -1,22 +1,15 @@
 #!/usr/bin/env node
+const execSync = require('child_process').execSync;
+const path = require('path');
+const shell = require('shelljs');
 
-const program = require('commander');
-const app = require('./package.json')
+const SEPERATOR = process.platform === 'win32' ? ";" : ':';
+const env = Object.assign({}, process.env);
 
-// const { addContact, getContact } = require('./logic');
+env.PATH = path.resolve('./node_modules/.bin') + SEPERATOR + env.PATH
 
-program
-  .version(app.version, '-v, --version')
-  .description(app.description)
-  // .option('-t, --template', 'which template to use')
+function exec(cmd) {
+  shell.exec(cmd)
+}
 
-program
-  .command('*')
-  .arguments('<project>')
-  .description('Scafold a project with name <project>')
-  .action((project, cmd) => {
-    console.log(project, cmd)
-    console.log(__dirname, process.cwd())
-  });
-
-program.parse(process.argv);
+shell.exec('PATH=$(npm bin):$PATH; mtml ./mtml/scenario.json')

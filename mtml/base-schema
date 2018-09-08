@@ -1,0 +1,112 @@
+import { merge } from 'lodash';
+import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';
+import {printSchema} from 'graphql';
+
+// DATE TYPES
+import {
+  GraphQLDate,
+  GraphQLTime,
+  GraphQLDateTime
+} from 'graphql-iso-date';
+
+// TYPE DEFS
+import { UserSchema, UserResolvers } from './User'
+import { NodeResolvers, NodeSchema } from './Node'
+
+// END TYPE DEFS
+
+// TEMPORARY
+<$_ if ( m.subscriptions ) { _$>
+import { pubsub } from '../subscriptions';
+const MESSAGE_ADDED_TOPIC = 'message_added';
+<$_ } _$>
+const messages = [];
+// END TEMPORARY
+
+const RootSchema = `
+  scalar DateTime
+  scalar Date
+  scalar Time
+
+  type Query {
+    # Get the currently logged in user (null if none)
+    current_user: User
+
+    # Get all messages
+    messages: [String!]!
+  }
+
+  type Mutation {
+    # Add a message
+    addMessage(text: String!): [String]
+  }
+
+<$_ if ( m.subscriptions ) { _$>
+  type Subscription {
+    # Subscribe to when a message is added
+    messageAdded: String
+  }
+
+<$_ } _$>
+  schema {
+    query: Query
+    mutation: Mutation
+<$_ if ( m.subscriptions ) { _$>
+    subscription: Subscription
+<$_ } _$>
+  }
+`;
+
+
+const RootResolvers = {
+  Query: {
+    current_user: (_, args, {current_user}) => current_user
+  },
+  Mutation: {
+    addMessage: (_, { text }, context) => {
+      messages.push(text)
+<$_ if ( m.subscriptions ) { _$>
+      pubsub.publish(MESSAGE_ADDED_TOPIC, { messageAdded: text });
+<$_ } _$>
+      return messages
+    }
+  },
+<$_ if ( m.subscriptions ) { _$>
+  Subscription: {
+    messageAdded: {
+      subscribe: () => pubsub.asyncIterator(MESSAGE_ADDED_TOPIC),
+    },
+  },
+<$_ } _$>
+  Date: GraphQLDate,
+  Time: GraphQLTime,
+  DateTime: GraphQLDateTime
+};
+
+// Put schema together into one array of schema strings
+// and one map of resolvers, like makeExecutableSchema expects
+const schema = [
+  RootSchema,
+  UserSchema,
+  NodeSchema,
+];
+
+const resolvers = merge(
+  RootResolvers,
+  UserResolvers,
+  NodeResolvers
+);
+
+const executableSchema = makeExecutableSchema({
+  typeDefs: schema,
+  resolvers,
+});
+
+// FOR TESTING SCHEMA
+// addMockFunctionsToSchema({schema: executableSchema})
+
+export const FullSchemaDeff = printSchema(executableSchema, {
+  commentDescriptions: true
+})
+
+export default executableSchema;

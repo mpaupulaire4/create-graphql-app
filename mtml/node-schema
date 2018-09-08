@@ -1,0 +1,36 @@
+
+
+const Node = `
+  interface Node {
+    id: ID!
+  }
+`
+
+const Queries = `
+  extend type Query {
+    # Return a Node
+    node(id: String!): Node
+  }
+`
+
+export const NodeResolvers = {
+  Query: {
+    node: (_, {id}, context) => {
+      // Provide some way to query any type based a a globally unique ID
+      return {
+        id
+      };
+    }
+  },
+  Node: {
+    __resolveType: (data, context, info) => {
+      // Provide Some way to tell what type is it.
+      return 'User';
+    },
+  },
+}
+
+export const NodeSchema = () => [
+  Node,
+  Queries
+]

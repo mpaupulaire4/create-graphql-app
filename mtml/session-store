@@ -1,0 +1,16 @@
+import session, { MemoryStore } from 'express-session'
+
+export default function setUpSessionStore(
+    app
+) {
+    const store = new MemoryStore()
+    app.use(session({
+        // ADD A SESSION STORE HERE
+        // will use MemoryStore by default
+        store,
+        secret: process.env.SESSION_STORE_SECRET,
+        resave: true,
+        saveUninitialized: true
+    }))
+    return store
+}
